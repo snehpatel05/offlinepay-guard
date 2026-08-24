@@ -1,0 +1,11 @@
+{
+  "name": "@offlinepay-guard/client",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node -e \"console.log('Static frontend is served by the server at http://localhost:8787')\"",
+    "build": "npm run check",
+    "check": "node --check static/app.js"
+  }
+}

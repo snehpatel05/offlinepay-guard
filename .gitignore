@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+**/dist/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Databases - ignore all local database files
+**/*.db
+**/*.db-*
+
+# Logs
+npm-debug.log*
+*.log
+
+# TypeScript
+*.tsbuildinfo
+
+# Local cache
+work/
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,463 @@
+:root {
+  color: #17201d;
+  background: #f4f7f5;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.appShell {
+  width: min(1180px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 28px 0 48px;
+}
+
+.heroBand {
+  min-height: 320px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);
+  align-items: end;
+  gap: 28px;
+  padding: 36px;
+  background:
+    linear-gradient(135deg, rgba(23, 107, 91, 0.94), rgba(24, 86, 122, 0.82)),
+    url("https://images.unsplash.com/photo-1556741533-411cf82e4e2d?auto=format&fit=crop&w=1800&q=80");
+  background-size: cover;
+  background-position: center;
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 24px 60px rgba(23, 32, 29, 0.16);
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.brandMark {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  font-weight: 900;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  max-width: 830px;
+  font-size: clamp(2.15rem, 4vw, 4.9rem);
+  line-height: 1.02;
+  letter-spacing: 0;
+}
+
+.heroCopy p {
+  margin-top: 18px;
+  max-width: 650px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.heroStats {
+  display: grid;
+  gap: 10px;
+}
+
+.heroStats div {
+  padding: 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.heroStats span,
+.stepLabel {
+  display: block;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.heroStats strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.55rem;
+}
+
+.controlStrip {
+  margin: 18px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  background: white;
+  border: 1px solid #dde7e2;
+}
+
+.statusCluster,
+.stripActions,
+.packetActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: #eef3f1;
+  color: #5f6f69;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.pillActive {
+  color: #0e5f50;
+  background: #dff4ed;
+}
+
+.ghostButton,
+.primaryButton {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border-radius: 8px;
+  border: 1px solid #c9d8d2;
+  background: white;
+  color: #1c2d28;
+  font-weight: 800;
+  padding: 0 14px;
+}
+
+.primaryButton {
+  width: 100%;
+  border-color: #176b5b;
+  background: #176b5b;
+  color: white;
+  margin-top: 14px;
+}
+
+.dangerText {
+  color: #b94232;
+}
+
+.toast {
+  position: fixed;
+  z-index: 5;
+  right: 22px;
+  top: 22px;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #17201d;
+  color: white;
+  box-shadow: 0 18px 40px rgba(23, 32, 29, 0.18);
+}
+
+.toast.success {
+  background: #176b5b;
+}
+
+.toast.error {
+  background: #b94232;
+}
+
+.toast.info {
+  background: #18567a;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.workflowGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.panel,
+.widePanel {
+  background: white;
+  border: 1px solid #dde7e2;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 12px 34px rgba(23, 32, 29, 0.06);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.panelHeader h2 {
+  margin-top: 4px;
+  font-size: 1.2rem;
+  letter-spacing: 0;
+}
+
+.panel .stepLabel,
+.widePanel .stepLabel {
+  color: #63746e;
+}
+
+.panelIcon {
+  flex: 0 0 auto;
+  min-width: 48px;
+  min-height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #dff4ed;
+  color: #176b5b;
+  font-weight: 900;
+  font-size: 0.72rem;
+}
+
+label {
+  display: block;
+  color: #52645d;
+  font-weight: 800;
+  font-size: 0.88rem;
+  margin: 0 0 8px;
+}
+
+.inputWrap {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #c9d8d2;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #fbfdfc;
+  margin-bottom: 14px;
+}
+
+.inputWrap span {
+  color: #63746e;
+  font-weight: 800;
+}
+
+input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #17201d;
+  font-weight: 800;
+}
+
+.twoInputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.securityList {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  color: #5f6f69;
+  font-size: 0.9rem;
+}
+
+.packetBox {
+  width: 100%;
+  height: 120px;
+  margin: 14px 0 12px;
+  padding: 12px;
+  border: 1px solid #c9d8d2;
+  border-radius: 8px;
+  resize: vertical;
+  color: #17201d;
+  background: #fbfdfc;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.packetVisual {
+  min-height: 236px;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  border-radius: 8px;
+  background: #eef3f1;
+  border: 1px dashed #b9cbc4;
+  color: #5f6f69;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.riskBox {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 8px;
+  background: #f6fbf9;
+  border: 1px solid #d4e7df;
+}
+
+.riskBox div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.riskBox span {
+  color: #63746e;
+  font-weight: 800;
+}
+
+.riskBox strong {
+  color: #176b5b;
+}
+
+.riskBox p {
+  color: #243530;
+  line-height: 1.45;
+}
+
+.riskBox small {
+  display: block;
+  margin-top: 8px;
+  color: #5f6f69;
+  line-height: 1.35;
+}
+
+.ledgerGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th,
+td {
+  padding: 12px 8px;
+  text-align: left;
+  border-bottom: 1px solid #e7efeb;
+  vertical-align: middle;
+}
+
+th {
+  color: #63746e;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+td {
+  color: #243530;
+}
+
+.tableBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #eef3f1;
+  color: #176b5b;
+  font-size: 0.74rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+@media (max-width: 980px) {
+  .heroBand,
+  .workflowGrid,
+  .ledgerGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .heroBand {
+    padding: 26px;
+  }
+
+  .controlStrip {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 620px) {
+  .appShell {
+    width: min(100vw - 20px, 1180px);
+    padding-top: 10px;
+  }
+
+  .heroBand {
+    min-height: 420px;
+    padding: 20px;
+  }
+
+  .twoInputs {
+    grid-template-columns: 1fr;
+  }
+
+  .stripActions,
+  .statusCluster {
+    align-items: stretch;
+  }
+
+  .ghostButton,
+  .pill {
+    width: 100%;
+  }
+}

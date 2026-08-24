@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OfflinePay Guard</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="appShell">
+      <section class="heroBand">
+        <div class="heroCopy">
+          <div class="brandRow">
+            <span class="brandMark">OP</span>
+            <span>OfflinePay Guard</span>
+          </div>
+          <h1>Signed offline payments with Razorpay preload and AI reconciliation.</h1>
+          <p>
+            Preload online, pay offline with cryptographic IOUs, validate on merchant device,
+            then sync safely when the network returns.
+          </p>
+        </div>
+        <div class="heroStats">
+          <div><span>Wallet</span><strong id="walletBalance">₹0</strong></div>
+          <div><span>Offline Limit</span><strong id="offlineLimit">₹500</strong></div>
+          <div><span>Pending Sync</span><strong id="pendingCount">0</strong></div>
+        </div>
+      </section>
+
+      <section class="controlStrip">
+        <div class="statusCluster">
+          <span id="razorpayPill" class="pill">Razorpay demo</span>
+          <span id="aiPill" class="pill">AI heuristic</span>
+          <span id="networkPill" class="pill pillActive">Online mode</span>
+        </div>
+        <div class="stripActions">
+          <button id="refreshBtn" class="ghostButton">Refresh</button>
+          <button id="networkBtn" class="ghostButton">Go Offline</button>
+          <button id="resetBtn" class="ghostButton dangerText">Reset</button>
+        </div>
+      </section>
+
+      <div id="toast" class="toast hidden"></div>
+
+      <section class="workflowGrid">
+        <article class="panel">
+          <div class="panelHeader">
+            <div>
+              <span class="stepLabel">Act 1</span>
+              <h2>Preload Wallet</h2>
+            </div>
+            <span class="panelIcon">BANK</span>
+          </div>
+          <label for="preloadAmount">Amount</label>
+          <div class="inputWrap">
+            <span>₹</span>
+            <input id="preloadAmount" type="number" min="1" max="2000" value="1000" />
+          </div>
+          <button id="preloadBtn" class="primaryButton">Simulate Test Preload</button>
+          <div class="securityList">
+            <span>Razorpay Orders API is used when test keys exist.</span>
+            <span>Payment signature verification runs on the backend.</span>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panelHeader">
+            <div>
+              <span class="stepLabel">Act 2</span>
+              <h2>Offline Handshake</h2>
+            </div>
+            <span class="panelIcon">SIGN</span>
+          </div>
+          <div class="twoInputs">
+            <div>
+              <label for="payAmount">Pay</label>
+              <div class="inputWrap">
+                <span>₹</span>
+                <input id="payAmount" type="number" min="1" max="500" value="200" />
+              </div>
+            </div>
+            <div>
+              <label for="merchantId">Merchant</label>
+              <div class="inputWrap">
+                <input id="merchantId" value="MCH1" />
+              </div>
+            </div>
+          </div>
+          <button id="generateBtn" class="primaryButton">Generate Signed Packet</button>
+          <textarea id="packetBox" class="packetBox" placeholder="Signed packet appears here"></textarea>
+          <div class="packetActions">
+            <button id="acceptBtn" class="ghostButton">Merchant Accept</button>
+            <button id="tamperBtn" class="ghostButton dangerText">Tamper Test</button>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panelHeader">
+            <div>
+              <span class="stepLabel">Act 3</span>
+              <h2>Reconcile</h2>
+            </div>
+            <span class="panelIcon">SYNC</span>
+          </div>
+          <div class="packetVisual">
+            <div id="packetHash">Packet hash appears after generation.</div>
+          </div>
+          <button id="syncBtn" class="primaryButton">Sync Pending Ledger</button>
+          <div id="riskBox" class="riskBox hidden"></div>
+        </article>
+      </section>
+
+      <section class="ledgerGrid">
+        <article class="widePanel">
+          <div class="panelHeader">
+            <div>
+              <span class="stepLabel">Customer Device</span>
+              <h2>Local Sub-Wallet Ledger</h2>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Txn</th><th>Direction</th><th>Status</th><th>Amount</th></tr>
+            </thead>
+            <tbody id="customerLedger"></tbody>
+          </table>
+        </article>
+
+        <article class="widePanel">
+          <div class="panelHeader">
+            <div>
+              <span class="stepLabel">Merchant Device</span>
+              <h2>Pending Sync Ledger</h2>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Txn</th><th>Merchant</th><th>Status</th><th>Amount</th><th>Time</th></tr>
+            </thead>
+            <tbody id="merchantLedger"></tbody>
+          </table>
+        </article>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
