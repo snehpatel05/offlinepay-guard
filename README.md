@@ -1,11 +1,39 @@
 # OfflinePay Guard
 
-AI-assisted offline payments for low-connectivity commerce, built for the Razorpay AI Buildathon.
+> **AI-assisted offline payments for low-connectivity commerce, built for the Razorpay AI Buildathon.**
+
+<p align="center">
+  <a href="https://offlinepay-guard.onrender.com">
+    <strong>🚀 LIVE DEMO — OPEN OFFLINEPAY GUARD</strong>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://offlinepay-guard.onrender.com">
+    https://offlinepay-guard.onrender.com
+  </a>
+</p>
 
 OfflinePay Guard lets a customer preload a small sub-wallet online, generate a cryptographically signed offline payment packet, let a merchant verify it without internet, and reconcile the transaction safely when connectivity returns. A Gemini-powered risk layer explains suspicious sync batches such as replay attempts, tampered packets, high-value offline activity, or duplicate nonces.
 
-> This is a Razorpay Test Mode buildathon prototype. It is not a production payment system or a regulated PSP implementation.
+> **Razorpay Test Mode Buildathon Prototype**  
+> This is not a production payment system or a regulated PSP implementation.
 
+---
+
+## 🚀 Live Demo
+
+**[Open OfflinePay Guard →](https://offlinepay-guard.onrender.com)**
+
+Experience the complete prototype:
+
+**Preload → Go Offline → Generate Signed Payment → Merchant Verification → Replay/Tamper Protection → Reconciliation → AI Risk Review**
+
+> **Note:** The demo is hosted on Render's free tier and may take a few seconds to wake up after a period of inactivity.
+
+---
+
+## Why This Matters
 ## Why This Matters
 
 Digital payments are excellent until the network disappears. Small merchants, rural stores, event counters, transport points, campus canteens, and crowded markets often face unreliable connectivity. When UPI or card flows fail, cash becomes the fallback.
