@@ -21,19 +21,14 @@ OfflinePay Guard lets a customer preload a small sub-wallet online, generate a c
 
 ---
 
-## 🚀 Live Demo
-
-**[Open OfflinePay Guard →](https://offlinepay-guard.onrender.com)**
-
-Experience the complete prototype:
+## 🎯 What the Demo Shows
 
 **Preload → Go Offline → Generate Signed Payment → Merchant Verification → Replay/Tamper Protection → Reconciliation → AI Risk Review**
 
-> **Note:** The demo is hosted on Render's free tier and may take a few seconds to wake up after a period of inactivity.
+> **Demo note:** The app is hosted on Render's free tier and may take a few seconds to wake up after a period of inactivity.
 
 ---
 
-## Why This Matters
 ## Why This Matters
 
 Digital payments are excellent until the network disappears. Small merchants, rural stores, event counters, transport points, campus canteens, and crowded markets often face unreliable connectivity. When UPI or card flows fail, cash becomes the fallback.
