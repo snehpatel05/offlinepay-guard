@@ -235,22 +235,7 @@ const money = (paise) =>
     maximumFractionDigits: 0
   }).format(paise / 100);
 
-// Endpoints that genuinely need the network. Everything else (signing,
-// merchant accept, tamper test) runs fully local and ignores this flag.
-const NETWORK_REQUIRED_PATHS = [
-  "/api/preload/create",
-  "/api/preload/confirm",
-  "/api/sync/merchant",
-  "/api/config",
-  "/api/state",
-  "/api/wallet/register-key",
-  "/api/demo/reset"
-];
-
 const api = async (path, options = {}) => {
-  if (!isOnline && NETWORK_REQUIRED_PATHS.some((p) => path.startsWith(p))) {
-    throw new Error("You're offline. Go back online to reach the server.");
-  }
   const response = await fetch(path, options);
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body.error || "Request failed");
@@ -411,22 +396,6 @@ const setNetwork = () => {
   elements.networkPill.textContent = isOnline ? "Online mode" : "Offline mode";
   elements.networkBtn.textContent = isOnline ? "Go Offline" : "Go Online";
   elements.networkPill.classList.toggle("pillActive", isOnline);
-
-  // These three genuinely need the server, so grey them out while "offline"
-  // instead of letting them fail with a confusing error mid-click.
-  elements.preloadBtn.disabled = !isOnline;
-  elements.syncBtn.disabled = !isOnline;
-  elements.refreshBtn.disabled = !isOnline;
-
-  // Generate / Accept / Tamper stay enabled always — that's the whole point,
-  // they run fully on-device now.
-
-  toast(
-    isOnline
-      ? "Back online. You can preload and sync again."
-      : "Simulated offline mode: no requests will reach the server. Generate, Accept, and Tamper still work.",
-    "info"
-  );
 };
 
 const handlePreload = async () => {
@@ -483,9 +452,6 @@ const handleGenerate = async () => {
   setBusy(elements.generateBtn, true, "");
   try {
     if (!deviceKeyPair) throw new Error("Device key not ready yet, try again in a moment.");
-    if (!appConfig || !appState) {
-      throw new Error("Waiting for the first sync with the server. Connect once, then you can go fully offline.");
-    }
 
     const amountPaise = Math.round(Number(elements.payAmount.value) * 100);
     const merchantId = elements.merchantId.value.toUpperCase();
@@ -546,9 +512,6 @@ const handleGenerate = async () => {
 const handleAccept = async () => {
   setBusy(elements.acceptBtn, true, "");
   try {
-    if (!appConfig) {
-      throw new Error("Waiting for the first sync with the server. Connect once, then you can go fully offline.");
-    }
     const armored = elements.packetBox.value.trim();
     if (!armored) throw new Error("No packet to accept.");
 
@@ -688,22 +651,6 @@ elements.resetBtn.addEventListener("click", async () => {
   await refresh();
 });
 
-// Keep the UI honest about the device's REAL network state too — useful on
-// mobile where you'd naturally flip airplane mode instead of clicking the
-// button. If the OS reports offline, force our toggle into offline mode
-// (and vice versa) so a judge on a phone sees it react automatically.
-window.addEventListener("offline", () => {
-  if (isOnline) setNetwork();
-});
-window.addEventListener("online", () => {
-  if (!isOnline) {
-    setNetwork();
-    // Now that we're actually back online, pull real config/state —
-    // covers the case where the page first loaded without a connection.
-    refresh().catch((error) => toast(error.message, "error"));
-  }
-});
-
 (async () => {
   try {
     deviceKeyPair = await loadDeviceKeyPair();
@@ -711,13 +658,5 @@ window.addEventListener("online", () => {
     console.error("Ed25519 key setup failed — this browser may not support Web Crypto Ed25519.", err);
     toast("This browser doesn't support the crypto needed for offline signing. Try a recent Chrome/Edge/Firefox/Safari.", "error");
   }
-
-  // If the page happened to load while the device was already offline
-  // (e.g. opened from cache), reflect that immediately instead of
-  // waiting for the first toggle click.
-  if (!navigator.onLine && isOnline) {
-    setNetwork();
-  }
-
   refresh().catch((error) => toast(error.message, "error"));
 })();
