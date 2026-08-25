@@ -1,3 +1,33 @@
+/* ============================================================
+   OfflinePay Guard — server/src/index.ts
+   FULL REPLACEMENT FILE
+
+   What changed vs the original:
+   1. New route: POST /api/wallet/register-key
+      Lets the browser register the public key it generated
+      locally. The server never sees the matching private key.
+
+   2. Reworked route: POST /api/sync/merchant
+      Previously this synced rows that /api/merchant/accept had
+      already written into merchant_transactions. Now the client
+      does signing AND merchant-accept validation locally (see
+      client/static/app.js), so this endpoint instead receives
+      the batch of locally-accepted packets directly, verifies
+      every signature itself (never trusts the client), applies
+      the wallet debit, and writes to customer_ledger /
+      central_transactions exactly as before.
+
+   Everything else — /api/health, /api/config, /api/state,
+   /api/demo/reset, /api/preload/create, /api/preload/confirm,
+   the old /api/offline/create-payment and /api/merchant/accept
+   routes, static file serving, error handling — is UNCHANGED.
+   The two old routes are left in place (harmless, unused by the
+   new client flow) so nothing else in your app can break.
+
+   No changes needed to: canonical.ts, cryptoEngine.ts, db.ts,
+   config.ts, razorpay.ts, risk.ts, package.json, index.html.
+   ============================================================ */
+
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -115,6 +145,39 @@ app.post(
   })
 );
 
+/* ----------------------------------------------------------------
+   NEW: device public-key registration.
+   The browser generates its own Ed25519 keypair (Web Crypto API),
+   keeps the private key local, and calls this once to tell the
+   server which public key to verify future packets against.
+   This intentionally overwrites public_key_pem only — it never
+   touches private_key_pem, so the old server-side signing routes
+   below still work if you ever want them for a fallback demo.
+   ---------------------------------------------------------------- */
+app.post(
+  "/api/wallet/register-key",
+  asyncHandler(async (req, res) => {
+    const parsed = z
+      .object({ publicKeyPem: z.string().min(20).max(2000) })
+      .parse(req.body);
+
+    // Sanity-check it's actually a usable Ed25519 public key before storing it.
+    try {
+      crypto.createPublicKey(parsed.publicKeyPem);
+    } catch {
+      res.status(400).json({ error: "Invalid public key format." });
+      return;
+    }
+
+    db.prepare("UPDATE wallets SET public_key_pem = ?, updated_at = ? WHERE user_id = ?").run(
+      parsed.publicKeyPem,
+      nowIso(),
+      "USER1"
+    );
+    res.json({ ok: true });
+  })
+);
+
 app.post(
   "/api/preload/create",
   asyncHandler(async (req, res) => {
@@ -215,6 +278,10 @@ app.post(
   })
 );
 
+/* ----------------------------------------------------------------
+   UNCHANGED (kept as a fallback / reference — the new client no
+   longer calls this route, since signing now happens in-browser).
+   ---------------------------------------------------------------- */
 app.post(
   "/api/offline/create-payment",
   asyncHandler(async (req, res) => {
@@ -283,6 +350,10 @@ app.post(
   })
 );
 
+/* ----------------------------------------------------------------
+   UNCHANGED (kept as a fallback / reference — the new client now
+   validates merchant-accept locally instead of calling this route).
+   ---------------------------------------------------------------- */
 app.post(
   "/api/merchant/accept",
   asyncHandler(async (req, res) => {
@@ -358,10 +429,33 @@ app.post(
   })
 );
 
+/* ----------------------------------------------------------------
+   REWORKED: now receives packets the client generated AND accepted
+   fully offline. Every signature is independently re-verified here
+   against the public key on file — the server never trusts the
+   client's word that a packet is valid. This is also where the
+   wallet debit finally happens (since the server had no visibility
+   into the transaction until this point).
+   ---------------------------------------------------------------- */
 app.post(
   "/api/sync/merchant",
-  asyncHandler(async (_req, res) => {
-    const pending = db
+  asyncHandler(async (req, res) => {
+    const parsed = z
+      .object({
+        packets: z
+          .array(
+            z.object({
+              txnId: z.string(),
+              armored: z.string().min(10)
+            })
+          )
+          .default([])
+      })
+      .parse(req.body);
+
+    // Also pick up any legacy rows created via the old /api/merchant/accept
+    // route, if present, so nothing that used the old path silently vanishes.
+    const legacyPending = db
       .prepare("SELECT * FROM merchant_transactions WHERE status = ? ORDER BY created_at ASC")
       .all("PENDING_SYNC") as Array<{
       txn_id: string;
@@ -376,16 +470,127 @@ app.post(
     const rejectedSignals: string[] = [];
     let synced = 0;
 
+    const wallet = getWallet();
+    let runningBalance = wallet.balance_paise;
+
+    const riskTransactions: Array<{
+      txnId: string;
+      userId: string;
+      merchantId: string;
+      amountPaise: number;
+      status: string;
+      createdAt: string;
+    }> = [];
+
     db.exec("BEGIN");
     try {
-      for (const txn of pending) {
+      // 1) New-style: client-signed-and-accepted packets submitted directly.
+      for (const item of parsed.packets) {
+        let packet: OfflinePacket;
+        try {
+          packet = decodePacket(item.armored);
+        } catch {
+          rejectedSignals.push(`rejected:${item.txnId}:malformed`);
+          continue;
+        }
+        const payload = packet.payload;
+
+        riskTransactions.push({
+          txnId: payload.nonce,
+          userId: payload.userId,
+          merchantId: payload.merchantId,
+          amountPaise: payload.amountPaise,
+          status: "PENDING_SYNC",
+          createdAt: nowIso()
+        });
+
+        const publicKey = getPublicKeyForUser(payload.userId);
+        const alreadyCentral = db
+          .prepare("SELECT txn_id FROM central_transactions WHERE txn_id = ?")
+          .get(payload.nonce);
+
+        const withinLimit = payload.amountPaise <= config.offlineTxnLimitPaise;
+        const notExpired = Date.parse(payload.expiresAt) >= Date.parse(payload.issuedAt);
+        const sigValid = Boolean(publicKey) && verifyPacket(packet, publicKey as string);
+        const balanceOk = runningBalance - payload.amountPaise >= 0;
+
+        if (!sigValid || alreadyCentral || !withinLimit || !notExpired || !balanceOk) {
+          rejectedSignals.push(`rejected:${payload.nonce}`);
+          continue;
+        }
+
+        runningBalance -= payload.amountPaise;
+
+        db.prepare(
+          "INSERT INTO central_transactions (txn_id, user_id, merchant_id, amount_paise, status, verified_at, packet_hash) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        ).run(
+          payload.nonce,
+          payload.userId,
+          payload.merchantId,
+          payload.amountPaise,
+          "VERIFIED",
+          nowIso(),
+          sha256Hex(canonicalJson(packet))
+        );
+
+        db.prepare(
+          "INSERT INTO customer_ledger (txn_id, amount_paise, direction, status, payload, created_at) VALUES (?, ?, ?, ?, ?, ?)"
+        ).run(payload.nonce, payload.amountPaise, "DEBIT", "SYNCED", item.armored, nowIso());
+
+        const alreadyInMerchantLedger = db
+          .prepare("SELECT txn_id FROM merchant_transactions WHERE txn_id = ?")
+          .get(payload.nonce);
+
+        if (!alreadyInMerchantLedger) {
+          db.prepare(
+            `INSERT INTO merchant_transactions (
+              txn_id, user_id, merchant_id, amount_paise, nonce, packet,
+              signature_status, status, created_at, synced_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          ).run(
+            payload.nonce,
+            payload.userId,
+            payload.merchantId,
+            payload.amountPaise,
+            payload.nonce,
+            item.armored,
+            "VALID",
+            "SYNCED",
+            nowIso(),
+            nowIso()
+          );
+        } else {
+          db.prepare("UPDATE merchant_transactions SET status = ?, synced_at = ? WHERE txn_id = ?").run(
+            "SYNCED",
+            nowIso(),
+            payload.nonce
+          );
+        }
+
+        synced += 1;
+      }
+
+      // 2) Legacy-style: rows already sitting in merchant_transactions from
+      //    the old /api/merchant/accept route (harmless to keep supporting).
+      for (const txn of legacyPending) {
         const packet = decodePacket(txn.packet);
         const publicKey = getPublicKeyForUser(packet.payload.userId);
         const alreadyCentral = db
           .prepare("SELECT txn_id FROM central_transactions WHERE txn_id = ?")
           .get(txn.txn_id);
 
-        if (!publicKey || !verifyPacket(packet, publicKey) || alreadyCentral) {
+        riskTransactions.push({
+          txnId: txn.txn_id,
+          userId: txn.user_id,
+          merchantId: txn.merchant_id,
+          amountPaise: txn.amount_paise,
+          status: "PENDING_SYNC",
+          createdAt: txn.created_at
+        });
+
+        const balanceOk = runningBalance - txn.amount_paise >= 0;
+
+        if (!publicKey || !verifyPacket(packet, publicKey) || alreadyCentral || !balanceOk) {
           rejectedSignals.push(`rejected:${txn.txn_id}`);
           db.prepare("UPDATE merchant_transactions SET status = ?, risk_score = ? WHERE txn_id = ?").run(
             "REJECTED_SYNC",
@@ -394,6 +599,8 @@ app.post(
           );
           continue;
         }
+
+        runningBalance -= txn.amount_paise;
 
         db.prepare(
           "INSERT INTO central_transactions (txn_id, user_id, merchant_id, amount_paise, status, verified_at, packet_hash) VALUES (?, ?, ?, ?, ?, ?, ?)"
@@ -413,6 +620,13 @@ app.post(
         );
         synced += 1;
       }
+
+      db.prepare("UPDATE wallets SET balance_paise = ?, updated_at = ? WHERE user_id = ?").run(
+        runningBalance,
+        nowIso(),
+        "USER1"
+      );
+
       db.exec("COMMIT");
     } catch (error) {
       db.exec("ROLLBACK");
@@ -422,21 +636,21 @@ app.post(
     const riskReport = await analyzeRisk({
       batchId,
       rejectedSignals,
-      transactions: pending.map((txn) => ({
-        txnId: txn.txn_id,
-        userId: txn.user_id,
-        merchantId: txn.merchant_id,
-        amountPaise: txn.amount_paise,
-        status: "PENDING_SYNC",
-        createdAt: txn.created_at
-      }))
+      transactions: riskTransactions
     });
 
     db.prepare(
       "INSERT INTO risk_reports (batch_id, score, summary, raw_json, created_at) VALUES (?, ?, ?, ?, ?)"
     ).run(batchId, riskReport.score, riskReport.summary, JSON.stringify(riskReport), nowIso());
 
-    res.json({ ok: true, batchId, pending: pending.length, synced, rejected: rejectedSignals.length, riskReport });
+    res.json({
+      ok: true,
+      batchId,
+      pending: parsed.packets.length + legacyPending.length,
+      synced,
+      rejected: rejectedSignals.length,
+      riskReport
+    });
   })
 );
 
