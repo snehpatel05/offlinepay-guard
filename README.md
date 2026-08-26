@@ -14,6 +14,18 @@
   </a>
 </p>
 
+<p align="center">
+  <a href="https://youtu.be/KEZnwmjDntQ">
+    <strong>🎥 WATCH THE DEMO VIDEO</strong>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://youtu.be/KEZnwmjDntQ">
+    https://youtu.be/KEZnwmjDntQ
+  </a>
+</p>
+
 OfflinePay Guard lets a customer preload a small sub-wallet online, generate a cryptographically signed offline payment packet, let a merchant verify it without internet, and reconcile the transaction safely when connectivity returns. A Gemini-powered risk layer explains suspicious sync batches such as replay attempts, tampered packets, high-value offline activity, or duplicate nonces.
 
 > **Razorpay Test Mode Buildathon Prototype**  
