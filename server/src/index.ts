@@ -1,32 +1,3 @@
-/* ============================================================
-   OfflinePay Guard — server/src/index.ts
-   FULL REPLACEMENT FILE
-
-   What changed vs the original:
-   1. New route: POST /api/wallet/register-key
-      Lets the browser register the public key it generated
-      locally. The server never sees the matching private key.
-
-   2. Reworked route: POST /api/sync/merchant
-      Previously this synced rows that /api/merchant/accept had
-      already written into merchant_transactions. Now the client
-      does signing AND merchant-accept validation locally (see
-      client/static/app.js), so this endpoint instead receives
-      the batch of locally-accepted packets directly, verifies
-      every signature itself (never trusts the client), applies
-      the wallet debit, and writes to customer_ledger /
-      central_transactions exactly as before.
-
-   Everything else — /api/health, /api/config, /api/state,
-   /api/demo/reset, /api/preload/create, /api/preload/confirm,
-   the old /api/offline/create-payment and /api/merchant/accept
-   routes, static file serving, error handling — is UNCHANGED.
-   The two old routes are left in place (harmless, unused by the
-   new client flow) so nothing else in your app can break.
-
-   No changes needed to: canonical.ts, cryptoEngine.ts, db.ts,
-   config.ts, razorpay.ts, risk.ts, package.json, index.html.
-   ============================================================ */
 
 import crypto from "node:crypto";
 import fs from "node:fs";
