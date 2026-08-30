@@ -16,7 +16,7 @@ export const config = {
   razorpayKeyId: process.env.RAZORPAY_KEY_ID ?? "",
   razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET ?? "",
   geminiApiKey: process.env.GEMINI_API_KEY ?? "",
-  geminiModel: process.env.GEMINI_MODEL ?? "gemini-2.5-flash",
+  geminiModel: process.env.GEMINI_MODEL ?? "gemini-3.6-flash",
   offlineTxnLimitPaise: numberFromEnv("OFFLINE_TXN_LIMIT_PAISE", 50000),
   offlineWalletCapPaise: numberFromEnv("OFFLINE_WALLET_CAP_PAISE", 200000),
   allowSimulatedPreload: (process.env.DEMO_ALLOW_SIMULATED_PRELOAD ?? "true") === "true"
